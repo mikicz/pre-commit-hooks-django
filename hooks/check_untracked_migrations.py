@@ -1,5 +1,6 @@
 import argparse
 import re
+from subprocess import CalledProcessError
 from typing import Optional
 from typing import Sequence
 
@@ -13,7 +14,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "--branches", nargs="*", help="Choose which branches to work on"
     )
     args = parser.parse_args(argv)
-    current_branch = get_current_branch()
+    try:
+        current_branch = get_current_branch()
+    except CalledProcessError as e:
+        # means probably that the commit this is being applied to is not on a branch
+        if e.returncode == 128:
+            return 0
+        raise
+
     if args.branches and current_branch not in args.branches:
         print(f"{current_branch} is not present in --branches arg")
         return 1
